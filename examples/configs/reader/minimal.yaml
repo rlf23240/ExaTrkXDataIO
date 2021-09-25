@@ -1,0 +1,58 @@
+# This is minimal working example for data reader.
+# For full example, see default.yaml
+
+evtid:
+    range: [0, 10]
+
+event:
+  files:
+    particles:
+      file: data/particles/event{evtid:09}-particles.csv
+      parser: pandas.csv
+
+    hits:
+      file: data/feature_store/{evtid}
+      parser: pyg.pickle
+
+  data:
+    particles:
+      particles:
+        particle_id: particle_id
+        px: px
+        py: py
+        pz: pz
+        mass: m
+        charge: q
+
+    hits:
+      hits:
+        hid: hid
+        pid: pid
+        r:
+          tag: x
+          processing:
+            - select:
+                column: 0
+        phi:
+          tag: x
+          processing:
+            - select:
+                column: 1
+        z:
+          tag: x
+          processing:
+            - select:
+                column: 2
+
+    truth:
+      hits:
+        sender:
+          tag: layerless_true_edges
+          processing:
+            - select:
+                row: 0
+        receiver:
+          tag: layerless_true_edges
+          processing:
+            - select:
+                row: 1

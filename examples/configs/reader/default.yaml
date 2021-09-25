@@ -1,0 +1,121 @@
+# This is a full example of reader configuration.
+# For minimal working example, see minimal.yaml.
+
+# Define event ID.
+evtid:
+    # Pass range of event ID.
+    range: [0, 10]
+    # Or specify id individually.
+    # indices: [0, 1, 2, 3, 4]
+
+
+# Define file parser for different formant.
+parsers:
+  # The following parser is automatic include.
+  # You don't need to define those parsers unless you want to create alias.
+  # We include here just for demonstration.
+
+  # Module path.
+  ExaTrkXDataIO.data_reader.event_file_parser.parsers:
+    # Parser ID and class name.
+    # Parser ID will be used in event definition later.
+    pandas.csv: PandasCSVParser
+    pyg.pickle: PyGPickleParser
+    numpy.npz: NumpyNPZParser
+
+  # You can include your custom parser with same format.
+  # Parser should inherit EventFileParser, see Custom Parser for detail.
+
+
+# Define data processor for moving data to .
+processor:
+  # The following processor is automatic include.
+  # You don't need to define those processors unless you want to create alias.
+  # We include here just for demonstration.
+
+  # Module path.
+  ExaTrkXDataIO.data_reader.event_data_processor.processors:
+    # Processor ID and class name.
+    # Processor ID will be used in event definition later.
+    # Transpose data.
+    transpose: Transpose
+    # Select data by column or row.
+    select: Select
+
+  # You can include your custom processor with same format.
+  # Custom processor should inherit EventDataProcessor, see Custom Processor for detail.
+
+
+# Define event structure.
+event:
+  files:
+    # Define files.
+    # The following file will be used to form dataframe.
+
+    # Particle file.
+    particles:
+      # File location. Use evtid to refer event ID.
+      file: data/particles/event{evtid:09}-particles.csv
+      # Parser will be use for this file.
+      parser: pandas.csv
+
+    # Hit file.
+    hits:
+      # File location. Use evtid to refer event ID.
+      file: data/feature_store/{evtid}
+      # Parser will be use for this file.
+      parser: pyg.pickle
+
+  data:
+    # Define dataframes.
+    # The following data will form corresponding dataframe in event object.
+
+    # Particle dataframe.
+    particles:
+      # Data contained in particle file.
+      particles:
+        particle_id: particle_id
+        px: px
+        py: py
+        pz: pz
+        mass: m
+        charge: q
+
+    # Hits dataframe.
+    hits:
+      # Data contained in hits file.
+      hits:
+        hid: hid
+        pid: pid
+        r:
+          tag: x
+          # Data processing pipeline.
+          processing:
+            # Select column 0.
+            - select:
+                column: 0
+        phi:
+          tag: x
+          processing:
+            - select:
+                column: 1
+        z:
+          tag: x
+          processing:
+            - select:
+                column: 2
+
+    # Truth labels dataframe.
+    truth:
+      # Data contained in hits file.
+      hits:
+        sender:
+          tag: layerless_true_edges
+          processing:
+            - select:
+                row: 0
+        receiver:
+          tag: layerless_true_edges
+          processing:
+            - select:
+                row: 1

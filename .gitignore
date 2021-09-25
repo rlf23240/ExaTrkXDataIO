@@ -135,7 +135,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-ExaTrkXDataIO
+ExaTrkXDataIOEnv
 .env
 .venv
 env/
