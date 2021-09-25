@@ -38,7 +38,7 @@ Before you start using this package, it is highly recommended seeing some exampl
 
     ![data](images/data.png)
 
-- Read through `examples/reader/default.yaml` and `examples/read.py` to see how configuration file works.
+- Read through [`examples/configs/reader/default.yaml`](examples/reader/configs/default.yaml) and [`examples/read.py`](examples/read.py) to see how configuration file works.
 - Run `examples/read.py`.
 
 ## Customization
