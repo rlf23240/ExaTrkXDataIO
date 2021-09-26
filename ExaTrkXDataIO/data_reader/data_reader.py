@@ -35,12 +35,14 @@ class DataReader:
         try:
             with open(config_path) as fp:
                 self.config = yaml.load(fp, Loader=yaml.SafeLoader)
-        except IOError:
-            print("Configuration file cannot be open: ", str(config_path))
-            exit(1)
-        except yaml.YAMLError:
-            print("Cannot parse file as YAML format: ", str(config_path))
-            exit(1)
+        except IOError as error:
+            raise IOError(
+                f"Configuration file cannot be open: {str(config_path)}.\n\n{error}"
+            )
+        except yaml.YAMLError as error:
+            raise yaml.YAMLError(
+                f"Cannot parse file as YAML format: {str(config_path)}.\n\n{error}"
+            )
 
         self._set_base_dir(base_dir)
         self._set_event_ids()
@@ -51,14 +53,14 @@ class DataReader:
     def _set_base_dir(self, base_dir):
         # Set base directory.
         if base_dir is None:
-            self.base_dir = Path()
+            self.base_dir = None
         else:
             self.base_dir = Path(base_dir)
 
     def _set_event_ids(self):
         # Get event IDs.
         if 'evtid' not in self.config:
-            raise KeyError(
+            raise SyntaxError(
                 'Event ID definition not found.'
                 'Make sure you define "evtid" section in correct way.'
             )
@@ -72,7 +74,7 @@ class DataReader:
         elif 'indices' in evtid_def:
             self.event_ids = evtid_def['indices']
         else:
-            raise TypeError('Event ID not define properly.')
+            raise SyntaxError('Event ID not define properly.')
 
     def _set_parsers(self):
         # Define parsers.
@@ -93,35 +95,66 @@ class DataReader:
 
     def _set_event_def(self):
         if 'event' not in self.config:
-            raise KeyError(
-                'Event data definition not found.'
+            raise SyntaxError(
+                'Event definition not found.'
                 'Make sure you define "event" section in correct way.'
             )
 
         self.event_def = self.config['event']
 
-        # Sanity checks.
-        """for name, data_def in self.event_def.items():
-            if 'parser' not in data_def:
-                raise KeyError(
-                    'Parser definition not found in data definition "{name}".'
-                    'Make sure you define "parser" in correct way.'
-                )
-            if data_def['parser'] not in self.parsers:
-                raise KeyError(
-                    f'Parser cannot be find for "{name}".'
-                    'Make sure your parser can be found with correct module path.'
-                )
-            if 'file' not in data_def:
-                raise KeyError(
-                    'File definition not found in data definition "{name}".'
-                    'Make sure you define "file" in correct way.'
-                )
-            if 'tags' not in data_def:
-                raise KeyError(
-                    'Tags definition not found in data definition "{name}".'
-                    'Make sure you define "tags" in correct way.'
-                )"""
+        # Early sanity checks.
+        # This is a partial check, not include all possible errors.
+        if 'files' not in self.event_def:
+            print(
+                'File definition not found.'
+                'If this is not intended, '
+                'make sure you define "data" section in correct way'
+            )
+        else:
+            for file_id, file_def in self.event_def['files'].items():
+                if 'file' not in file_def:
+                    raise SyntaxError(
+                        f'File definition not found for {file_id}.'
+                        'Make sure you define "file" option in correct way.'
+                    )
+                if 'parser' not in file_def or file_def['parser'] not in self.parsers:
+                    raise AttributeError(
+                        f'Parser not found for {file_id}.'
+                        'Make sure you define "parser" option in correct way.'
+                    )
+
+        if 'data' not in self.event_def:
+            print(
+                'Data definition not found.'
+                'If this is not intended, '
+                'make sure you define "data" section in correct way.'
+            )
+        else:
+            for dataframe_id, dataframe_def in self.event_def['data'].items():
+                for file_id, fields in dataframe_def.items():
+                    for name, field_def in fields.items():
+                        if type(field_def) is str:
+                            pass
+                        elif type(field_def) is dict:
+                            if 'tag' not in field_def:
+                                raise SyntaxError(
+                                    'Tag definition not found.'
+                                    'Make sure you define "tag" in correct way.'
+                                )
+                            if 'processing' in field_def:
+                                for operation_data in field_def['processing']:
+                                    try:
+                                        processor_id, parameters = list(operation_data.items())[0]
+                                    except Exception as error:
+                                        raise SyntaxError(
+                                            f'Processing pipeline for {field_def["tag"]} is not defined properly.'
+                                            'Please recheck your pipeline definition.'
+                                        )
+                                    if processor_id not in self.processors:
+                                        raise AttributeError(
+                                            f'Processor not found for {field_def["tag"]}.'
+                                            'Please recheck your pipeline definition.'
+                                        )
 
     def read(self):
         for event_id in self.event_ids:
@@ -139,9 +172,12 @@ class DataReader:
         files = {}
         for name, file_def in self.event_def['files'].items():
             parser = self.parsers[file_def['parser']]
-            files[name] = parser(
-                self.base_dir / Path(file_def['file'].format(evtid=event_id))
-            )
+
+            file_path = Path(file_def['file'].format(evtid=event_id))
+            if self.base_dir is not None:
+                file_path = self.base_dir / file_path
+
+            files[name] = parser(file_path)
 
         # Construct dataframe.
         for name, data_def in self.event_def['data'].items():

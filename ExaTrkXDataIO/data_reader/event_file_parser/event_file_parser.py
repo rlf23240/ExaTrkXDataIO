@@ -9,6 +9,7 @@ import numpy as np
 
 from ..event_data_processor import EventDataProcessor
 
+
 class EventFileParser(ABC):
     def __init__(self, path):
         self.data = self.load(path)
@@ -23,11 +24,6 @@ class EventFileParser(ABC):
             if type(field_def) is str:
                 result[name] = self.extract(self.data, field_def)
             elif type(field_def) is dict:
-                if 'tag' not in field_def:
-                    raise KeyError(
-                        'Tag definition not found.'
-                        'Make sure you define "tag" in correct way.'
-                    )
                 extracted_data = self.extract(self.data, field_def['tag'])
                 if 'processing' in field_def:
                     for operation_data in field_def['processing']:
