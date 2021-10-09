@@ -25,15 +25,10 @@ Since pip interface is not provided yet, you need to clone this project and inst
 - Pandas
 - PyYAML
 
-The following packages are required for now, but will mark as optional in near feature:
-
-- PyTorch
-- PyTorch-Geometric
-
 ### Testing
 Before you start using this package, it is highly recommended seeing some examples in `examples` folder. To run the example, you need:
 
-- Add project root to your `$PYTHONPATH` or virtual environment package path in order to import package properly. If you are using PyCharm, this should be default behavior. This step will be removed in near feature.
+- Install package using `pip3 install -e .`
 - Get data and place at least 10 event under `examples/data`. In this example, we use `particles/event{evt_id}-particles.csv` and `feature_store/{evt_id}` files. It should be placed as following:
 
     ![data](images/data.png)
