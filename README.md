@@ -19,11 +19,13 @@ This package is aim to simplify this process by providing additional data format
 ## Preparation
 
 ### Install
-Since pip interface is not provided yet, you need to clone this project and install following dependencies:
+You can clone this project and install with 
 
-- Numpy
-- Pandas
-- PyYAML
+    pip3 install -e .
+
+and walk through examples, or install package only by 
+
+    pip3 install git+https://github.com/rlf23240/ExaTrkXDataIO
 
 ### Testing
 Before you start using this package, it is highly recommended seeing some examples in `examples` folder. To run the example, you need:
