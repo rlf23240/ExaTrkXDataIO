@@ -85,8 +85,8 @@ event:
     hits:
       # Data contained in hits file.
       hits:
-        hid: hid
-        pid: pid
+        hit_id: hid
+        particle_id: pid
         r:
           tag: x
           # Data processing pipeline.

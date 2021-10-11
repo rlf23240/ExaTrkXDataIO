@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='ExaTrkXDataIO',
@@ -14,9 +14,7 @@ setup(
         'numpy',
         'pandas',
     ],
-    packages=[
-        'ExaTrkXDataIO'
-    ],
+    packages=find_packages(),
     classifiers=[
         'Development Status :: 4 - Beta',
 
