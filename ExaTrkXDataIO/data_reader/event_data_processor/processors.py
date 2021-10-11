@@ -17,4 +17,17 @@ class Select(EventDataProcessor):
             return data[:, kwargs['column']]
         if 'row' in kwargs:
             return data[kwargs['row'], :]
+        if 'key' in kwargs:
+            return data[kwargs['key']]
         return data
+
+
+class Normalize(EventDataProcessor):
+    def process(self, data: np.array, **kwargs) -> np.array:
+        if 'scale' in kwargs:
+            return data/kwargs['scale']
+        else:
+            minimum = min(data)
+            maximum = max(data)
+
+            return (data-minimum)/(maximum-minimum)

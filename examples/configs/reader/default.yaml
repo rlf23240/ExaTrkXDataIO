@@ -28,7 +28,7 @@ parsers:
 
 
 # Define data processor to process data and fit data into a column of dataframe.
-processor:
+processors:
   # The following processor is automatic include.
   # You don't need to define those processors unless you want to create alias.
   # We include here just for demonstration.

@@ -10,10 +10,12 @@ reader = DataReader(
 
 # Read all event at once.
 events = reader.read_all()
-
-# Show result.
 print(events)
 
 # Or read one by one if data is too large.
 # for event in reader.read():
 #    print(event)
+
+# Or read specific event
+# event = reader.read_one(evtid=3)
+# print(event)

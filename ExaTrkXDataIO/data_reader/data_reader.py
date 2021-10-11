@@ -3,6 +3,7 @@
 
 from pathlib import Path
 from importlib import import_module
+from itertools import product
 
 import pandas as pd
 import yaml
@@ -11,24 +12,37 @@ from ..event import Event
 from .event_file_parser.parsers import (
     NumpyNPZParser,
     PandasCSVParser,
-    PyGPickleParser
+    PyGPickleParser,
+    TensorboardLogParser
 )
 from .event_data_processor.processors import (
     Transpose,
-    Select
+    Select,
+    Normalize
 )
 
 
 class DataReader:
+    # Default parsers which you don't need to include manually.
     _default_parsers = {
         'numpy.npz': NumpyNPZParser,
         'pandas.csv': PandasCSVParser,
-        'pyg.pickle': PyGPickleParser
+        'pyg.pickle': PyGPickleParser,
+        'tb.log': TensorboardLogParser
     }
 
+    # Default processors which you don't need to include manually.
     _default_processors = {
         'transpose': Transpose(),
-        'select': Select()
+        'select': Select(),
+        'normalize': Normalize()
+    }
+
+    # Key words use for special purposes and cannot use as variable key words.
+    _keywords = {
+        'event': 'event',
+        'parsers': 'parsers',
+        'processors': 'processors'
     }
 
     def __init__(self, config_path, base_dir=None):
@@ -45,7 +59,7 @@ class DataReader:
             )
 
         self._set_base_dir(base_dir)
-        self._set_event_ids()
+        self._set_variables()
         self._set_parsers()
         self._set_processor()
         self._set_event_def()
@@ -57,24 +71,22 @@ class DataReader:
         else:
             self.base_dir = Path(base_dir)
 
-    def _set_event_ids(self):
-        # Get event IDs.
-        if 'evtid' not in self.config:
-            raise SyntaxError(
-                'Event ID definition not found.'
-                'Make sure you define "evtid" section in correct way.'
-            )
+    def _set_variables(self):
+        self.variables = {}
 
-        evtid_def = self.config['evtid']
-        if 'range' in evtid_def:
-            self.event_ids = list(range(
-                evtid_def['range'][0],
-                evtid_def['range'][1]
-            ))
-        elif 'indices' in evtid_def:
-            self.event_ids = evtid_def['indices']
-        else:
-            raise SyntaxError('Event ID not define properly.')
+        for name, definition in self.config.items():
+            if name not in self._keywords.keys():
+                if 'range' in definition:
+                    self.variables[name] = list(range(
+                        definition['range'][0],
+                        definition['range'][1]
+                    ))
+                elif 'indices' in definition:
+                    self.variables[name] = definition['indices']
+                elif 'list' in definition:
+                    self.variables[name] = definition['list']
+                else:
+                    raise SyntaxError(f'Variable {name} not define properly.')
 
     def _set_parsers(self):
         # Define parsers.
@@ -91,7 +103,7 @@ class DataReader:
             for module_name, class_names in self.config['processors'].items():
                 module = import_module(module_name)
                 for name, class_name in class_names.items():
-                    self.processors[name] = getattr(module, class_name)
+                    self.processors[name] = getattr(module, class_name)()
 
     def _set_event_def(self):
         if 'event' not in self.config:
@@ -157,23 +169,35 @@ class DataReader:
                                         )
 
     def read(self):
-        for event_id in self.event_ids:
-            yield self.read_one(event_id)
+        # FIXME: Unused variables cause duplicated reading progress.
+
+        value_combinations = product(*(self.variables.values()))
+
+        for values in value_combinations:
+            yield self.read_one(
+                **dict(zip(self.variables.keys(), values))
+            )
 
     def read_all(self):
+        # FIXME: Unused variables cause duplicated reading progress.
+
+        value_combinations = product(*(self.variables.values()))
+
         return [
-            self.read_one(event_id) for event_id in self.event_ids
+            self.read_one(
+                **dict(zip(self.variables.keys(), values))
+            ) for values in value_combinations
         ]
 
-    def read_one(self, event_id):
-        event = Event(event_id=event_id, data={})
+    def read_one(self, **kwargs):
+        event = Event(event_id=kwargs.get('evtid', None), data={})
 
         # Read files.
         files = {}
         for name, file_def in self.event_def['files'].items():
             parser = self.parsers[file_def['parser']]
 
-            file_path = Path(file_def['file'].format(evtid=event_id))
+            file_path = Path(file_def['file'].format(**kwargs))
             if self.base_dir is not None:
                 file_path = self.base_dir / file_path
 
