@@ -190,7 +190,7 @@ class DataReader:
         ]
 
     def read_one(self, **kwargs):
-        data = Data(metadata=kwargs, data={})
+        data = Data(metadata=kwargs, dataframes={})
 
         # Read files.
         files = {}
@@ -212,7 +212,7 @@ class DataReader:
                         fields, self.processors
                     ))
                 )
-            data.data[name] = pd.concat(dataframes)
+            data.dataframes[name] = pd.concat(dataframes)
 
         return data
 

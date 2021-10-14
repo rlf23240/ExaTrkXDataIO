@@ -16,10 +16,10 @@ class Data:
     def __init__(
         self,
         metadata: Dict[str, Any],
-        dataframe: Dict[str, pd.DataFrame]
+        dataframes: Dict[str, pd.DataFrame]
     ):
         self.metadata = metadata
-        self.dataframe = dataframe
+        self.dataframes = dataframes
 
     def __getattr__(self, item):
         """
@@ -31,7 +31,7 @@ class Data:
         """
         Get dataframe.
         """
-        return self.dataframe[item]
+        return self.dataframes[item]
 
     def __repr__(self):
         str_repr = f"\n======Data======\n"
@@ -43,7 +43,7 @@ class Data:
             )
 
         str_repr += "\nDataframes:\n"
-        for name, data in self.data.items():
+        for name, data in self.dataframes.items():
             str_repr += (
                 f"- {name}: \n{data.head()}\n...\n"
             )
