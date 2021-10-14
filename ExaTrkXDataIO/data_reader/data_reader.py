@@ -8,7 +8,7 @@ from itertools import product
 import pandas as pd
 import yaml
 
-from ..event import Event
+from ..data import Data
 from .event_file_parser.parsers import (
     NumpyNPZParser,
     PandasCSVParser,
@@ -190,7 +190,7 @@ class DataReader:
         ]
 
     def read_one(self, **kwargs):
-        event = Event(event_id=kwargs.get('evtid', None), data={})
+        data = Data(metadata=kwargs, data={})
 
         # Read files.
         files = {}
@@ -212,9 +212,9 @@ class DataReader:
                         fields, self.processors
                     ))
                 )
-            event.data[name] = pd.concat(dataframes)
+            data.data[name] = pd.concat(dataframes)
 
-        return event
+        return data
 
     def __iter__(self):
         self.read()
