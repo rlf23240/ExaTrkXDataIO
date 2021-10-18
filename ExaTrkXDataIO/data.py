@@ -31,6 +31,9 @@ class Data:
         """
         Set metadata
         """
+        if key == 'metadata' or key == 'dataframes':
+            return super().__setattr__(key, value)
+
         self.metadata[key] = value
 
     def __getitem__(self, item):
