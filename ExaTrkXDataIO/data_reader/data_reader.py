@@ -85,6 +85,8 @@ class DataReader:
                     self.variables[name] = definition['indices']
                 elif 'list' in definition:
                     self.variables[name] = definition['list']
+                elif 'constant' in definition:
+                    self.variables[name] = [definition['constant']]
                 else:
                     raise SyntaxError(f'Variable {name} not define properly.')
 
@@ -167,6 +169,18 @@ class DataReader:
                                             f'Processor not found for {field_def["tag"]}.'
                                             'Please recheck your pipeline definition.'
                                         )
+
+    def set_variable(self, key, value: list):
+        """
+        Set reading parameter with list of values.
+        """
+        self.variables[key] = value
+
+    def set_constant(self, key, value):
+        """
+        Set reading parameter with a constant value.
+        """
+        self.variables[key] = [value]
 
     def read(self):
         # FIXME: Unused variables cause duplicated reading progress.
