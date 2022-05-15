@@ -58,17 +58,7 @@ try:
 
     class TensorboardLogParser(EventFileParser):
         def load(self, path: Path) -> Any:
-            if path.is_dir():
-                log_path = next(path.glob('events.out.tfevents.*'))
-                if log_path is None:
-                    raise FileNotFoundError(
-                        f'Cannot find log file under {str(path)},'
-                        f'make sure log file has name match "events.out.tfevents.*"'
-                    )
-            else:
-                log_path = path
-
-            events = event_accumulator.EventAccumulator(str(log_path))
+            events = event_accumulator.EventAccumulator(str(path))
             events.Reload()
 
             return events
