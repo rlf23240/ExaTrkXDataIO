@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from typing import Optional
 from pathlib import Path
 from importlib import import_module
 from itertools import product
@@ -76,19 +77,21 @@ class DataReader:
 
         for name, definition in self.config.items():
             if name not in self._keywords.keys():
-                if 'range' in definition:
-                    self.variables[name] = list(range(
-                        definition['range'][0],
-                        definition['range'][1]
-                    ))
-                elif 'indices' in definition:
-                    self.variables[name] = definition['indices']
-                elif 'list' in definition:
-                    self.variables[name] = definition['list']
-                elif 'constant' in definition:
-                    self.variables[name] = [definition['constant']]
-                else:
-                    raise SyntaxError(f'Variable {name} not define properly.')
+                variable = []
+                for type, values in definition.items():
+                    if type == 'range':
+                        variable.extend(list(range(
+                            values[0],
+                            values[1]
+                        )))
+                    elif type == 'indices' or type == 'list':
+                        variable.extend(values)
+                    elif 'constant' in definition:
+                        variable.append(values)
+                    else:
+                        raise SyntaxError(f'Variable {name} not define properly.')
+
+                self.variables[name] = variable
 
     def _set_parsers(self):
         # Define parsers.
@@ -188,22 +191,17 @@ class DataReader:
         value_combinations = product(*(self.variables.values()))
 
         for values in value_combinations:
-            yield self.read_one(
+            data = self.read_one(
                 **dict(zip(self.variables.keys(), values))
             )
+            if data is not None:
+                yield data
 
     def read_all(self):
-        # FIXME: Unused variables cause duplicated reading progress.
+        return list(self.read())
 
-        value_combinations = product(*(self.variables.values()))
 
-        return [
-            self.read_one(
-                **dict(zip(self.variables.keys(), values))
-            ) for values in value_combinations
-        ]
-
-    def read_one(self, **kwargs):
+    def read_one(self, **kwargs) -> Optional[Data]:
         data = Data(metadata=kwargs, dataframes={})
 
         # Read files.
@@ -215,7 +213,10 @@ class DataReader:
             if self.base_dir is not None:
                 file_path = self.base_dir / file_path
 
-            files[name] = parser(file_path)
+            if file_path.exists():
+                files[name] = parser(file_path)
+            else:
+                return None
 
         # Construct dataframe.
         for name, data_def in self.event_def['data'].items():
@@ -232,3 +233,4 @@ class DataReader:
 
     def __iter__(self):
         self.read()
+

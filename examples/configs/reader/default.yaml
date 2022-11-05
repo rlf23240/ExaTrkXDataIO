@@ -4,6 +4,7 @@
 # Define event ID.
 evtid:
     # Pass range of event ID.
+    # Note that event with missing file will be skipped
     range: [0, 10]
     # Or specify id individually.
     # indices: [0, 1, 2, 3, 4]

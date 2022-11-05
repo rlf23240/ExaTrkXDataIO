@@ -10,6 +10,7 @@ reader = DataReader(
 
 # Read all event at once.
 events = reader.read_all()
+print(f'Total {len(events)} event read.')
 print(events)
 
 # Or read one by one if data is too large.
