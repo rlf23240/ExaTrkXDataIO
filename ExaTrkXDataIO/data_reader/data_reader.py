@@ -47,6 +47,14 @@ class DataReader:
     }
 
     def __init__(self, config_path, base_dir=None):
+        """
+        Construct data reader.
+
+        :param config_path: Path to yaml configuration.
+        :param base_dir: 
+            Base directory for your dataset. 
+            This will append before file path you specify in configuration file.
+        """
         try:
             with open(config_path) as fp:
                 self.config = yaml.load(fp, Loader=yaml.SafeLoader)
@@ -185,20 +193,35 @@ class DataReader:
         """
         self.variables[key] = [value]
 
-    def read(self):
+    def read(self, silent_skip=False):
+        """
+        Iterate events.
+
+        :param silent_skip: 
+            Skip non-exist files without warning. Default is False.
+        """
         # FIXME: Unused variables cause duplicated reading progress.
 
         value_combinations = product(*(self.variables.values()))
 
         for values in value_combinations:
-            data = self.read_one(
-                **dict(zip(self.variables.keys(), values))
-            )
+            kwargs = dict(zip(self.variables.keys(), values))
+            data = self.read_one(**kwargs)
+
             if data is not None:
                 yield data
+            elif not silent_skip:
+                print(f'Event for {kwargs} not find. Skipped.')
 
-    def read_all(self):
-        return list(self.read())
+
+    def read_all(self, silent_skip=False):
+        """
+        Read all events.
+
+        :param silent_skip: 
+            Skip non-exist files without warning. Default is False.
+        """
+        return list(self.read(silent_skip=silent_skip))
 
 
     def read_one(self, **kwargs) -> Optional[Data]:
